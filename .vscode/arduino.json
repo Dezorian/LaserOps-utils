@@ -1,0 +1,6 @@
+{
+    "board": "arduino:samd:adafruit_circuitplayground_m0",
+    "port": "COM11",
+    "sketch": "teamHitColour\\teamHitColour.ino",
+    "output": "C:\\Users\\Simon\\Developer\\NerfLaserOpsBase\\build"
+}
