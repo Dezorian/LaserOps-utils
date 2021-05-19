@@ -183,22 +183,22 @@ void handleIR()
       } else if (myDecoder.value == RED && _selectedTeam == blue) {
         if (_hitPoints > 1) {
           _hitPoints = _hitPoints -1;
-          setPixels(red, _hitPoints); 
+          setPixels(blue, _hitPoints); 
           Serial.print("Red shot received, hitpoints left: "); 
           Serial.print(_hitPoints); 
           Serial.println();           
         } else {
-          baseDestroyed(red);
+          baseDestroyed(blue);
         }   
       } else if (myDecoder.value == BLUE && _selectedTeam == red) {
         if (_hitPoints > 1) {
           _hitPoints = _hitPoints -1;
-          setPixels(blue, _hitPoints); 
+          setPixels(red, _hitPoints); 
           Serial.print("Blue shot received, hitpoints left: "); 
           Serial.print(_hitPoints); 
           Serial.println();           
         } else {
-          baseDestroyed(blue);
+          baseDestroyed(red);
         }   
       }
     }
