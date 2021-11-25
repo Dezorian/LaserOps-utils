@@ -67,19 +67,6 @@ uint16_t BLUESend[35] = {3000, 6000, 3000,
 2000, 2000, 2000, 1000, 2000, 1000, 2000, 1000,
 2000, 1000, 2000, 2000, 2000, 1000, 2000, 1000,
 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000};
-/*
-uint32_t PURPLESend32[35] = {2900, 6000, 2900, 
-2100,  850, 2100, 850, 2100, 850, 2100, 850, 
-2100, 1850, 2100, 850, 2100, 850, 2100, 850,
-2100, 1850, 2100, 850, 2100, 850, 2100, 850, 
-2100,  850, 2100, 850, 2100, 850, 2100, 850 };
-
-uint16_t PURPLESend16[35] = {2900, 6000, 2900, 
-2100,  850, 2100, 850, 2100, 850, 2100, 850, 
-2100, 1850, 2100, 850, 2100, 850, 2100, 850,
-2100, 1850, 2100, 850, 2100, 850, 2100, 850, 
-2100,  850, 2100, 850, 2100, 850, 2100, 850 };
-*/
 
 uint16_t PURPLESend[35] = {3000, 6000, 3000,
 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000,
@@ -335,7 +322,7 @@ void handleIR()
     if(myReceiver.getResults()) {      
       myDecoder.decode();
       
-      /*Show incoming buffer
+      /*DEBUG Show incoming buffer
       for (int i = 0; i < recvGlobal.recvLength; i++)
       {
         Serial.println(recvGlobal.recvBuffer[i]);
@@ -366,12 +353,6 @@ void handleButtons()
     // If the left button is pressed....
   if (digitalRead(CPLAY_LEFTBUTTON) && !_leftbuttonPressed) {
     
-    /*mySender.send(&PURPLESend16[0],35,38);  
-    delay(500);
-    mySender.sendGeneric(*PURPLESend32, 16, 3, 6, 2, 1, 2, 2, 38, true);
-    delay(500);
-    myReceiver.enableIRIn();   */
-
     makeTone(CPLAY_BUZZER, 4000, 50);
     _leftbuttonPressed = true;    
 
@@ -392,12 +373,6 @@ void handleButtons()
     makeTone(CPLAY_BUZZER, 4000, 50); 
     _rightbuttonPressed = true;
     
-    /*if (_selectedTeam == red) {
-      _selectedTeam = undefined;
-    } else {
-      _selectedTeam=(Color)(_selectedTeam-1);
-    }
-
     indicateStatus();   */
     if (_selectedTeam == shootout)
     {
