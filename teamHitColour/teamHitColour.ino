@@ -18,19 +18,25 @@
 #define CPLAY_LIS3DH_CS -1        ///< LIS3DH chip select pin
 #define CPLAY_LIS3DH_INTERRUPT 27 ///< LIS3DH interrupt pin
 #define CPLAY_LIS3DH_ADDRESS 0x19 ///< LIS3DH I2C address
+#define ADAFRUIT_CIRCUITPLAYGROUND_M0
 
 // Use only HashRaw to return a 32 bit hash.
 #include <IRLibDecodeBase.h>
+#include <IRLibSendBase.h>
 #include <IRLib_HashRaw.h>  //Must be last protocol
+
+IRsendRaw mySender;
+
+// Include a receiver
+#include <IRLibRecv.h>
+
+IRrecv myReceiver(CPLAY_IR_RECEIVER);
+
 #include <IRLibCombo.h>     // After all protocols, include this
 // All of the above automatically creates a universal decoder
 // class called "IRdecode" containing only the protocols you want.
 // Now declare an instance of that decoder.
 IRdecode myDecoder;
-
-// Include a receiver
-#include <IRLibRecv.h>
-IRrecv myReceiver(CPLAY_IR_RECEIVER);
 
 // include the adafruit neopixel library
 #include <Adafruit_NeoPixel.h>
@@ -49,15 +55,49 @@ static const long PURPLE = 0x67228B44;
 static const long RED = 0x78653B0E;
 static const long BLUE = 0x2FFEA610;
 
+/* IR Code for sending */
+uint16_t REDSend[35] = {3000, 6000, 3000,
+2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000,
+2000, 2000, 2000, 1000, 2000, 1000, 2000, 1000,
+2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000,
+2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000};
+
+uint16_t BLUESend[35] = {3000, 6000, 3000,
+2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000,
+2000, 2000, 2000, 1000, 2000, 1000, 2000, 1000,
+2000, 1000, 2000, 2000, 2000, 1000, 2000, 1000,
+2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000};
+/*
+uint32_t PURPLESend32[35] = {2900, 6000, 2900, 
+2100,  850, 2100, 850, 2100, 850, 2100, 850, 
+2100, 1850, 2100, 850, 2100, 850, 2100, 850,
+2100, 1850, 2100, 850, 2100, 850, 2100, 850, 
+2100,  850, 2100, 850, 2100, 850, 2100, 850 };
+
+uint16_t PURPLESend16[35] = {2900, 6000, 2900, 
+2100,  850, 2100, 850, 2100, 850, 2100, 850, 
+2100, 1850, 2100, 850, 2100, 850, 2100, 850,
+2100, 1850, 2100, 850, 2100, 850, 2100, 850, 
+2100,  850, 2100, 850, 2100, 850, 2100, 850 };
+*/
+
+uint16_t PURPLESend[35] = {3000, 6000, 3000,
+2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000,
+2000, 2000, 2000, 1000, 2000, 1000, 2000, 1000,
+2000, 2000, 2000, 1000, 2000, 1000, 2000, 1000,
+2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000};
+
 int numTones = 10;
 int tones[] = {261, 277, 294, 311, 330, 349, 370, 392, 415, 440};
 //            mid C  C#   D    D#   E    F    F#   G    G#   A
 
-enum Color { red, blue, purple, undefined};
+enum Color { red, blue, purple, shootout, undefined};
 enum Color _selectedTeam = undefined;
 bool _leftbuttonPressed = false;
 bool _rightbuttonPressed = false;
 int _hitPoints = 10;
+int _purplePoints = 0;
+int _bluePoints = 0;
 int _timesDestroyed = 0;
 
 
@@ -85,12 +125,69 @@ void setup() {
 
   Serial.begin(115200);
   //while (!Serial); //delay to wait for serial port
+  
   myReceiver.enableIRIn(); // Start the receiver
+
   Serial.println(F("Ready to receive IR signals"));
   strip.begin();
   strip.setBrightness(64);
   strip.clear();
   strip.show();
+}
+
+void setPixels(Color setColor, int hitPoints, bool shootoutDelay = false)
+{  
+  int nrOfPixels;
+  strip.clear();
+  strip.show();
+  
+  //When -1 is given, all led are on
+  if (hitPoints == -1) {
+    nrOfPixels = strip.numPixels();    
+  } else {
+    nrOfPixels = hitPoints-1;    
+  }  
+
+  switch (setColor)
+  {
+  case purple:
+    for (int i=0; i<=nrOfPixels; i++) {
+      strip.setPixelColor(i, 0xFF, 0x00, 0xFF);      
+    }
+    break;
+  case blue:
+    for (int i=0; i<=nrOfPixels; i++) {
+      strip.setPixelColor(i, 0x00, 0x00, 0xFF);      
+    }
+    break;
+  case red:
+    for (int i=0; i<=nrOfPixels; i++) {
+      strip.setPixelColor(i, 0xFF, 0x00, 0x00);     
+    }
+    break;    
+  case shootout:  
+    //Shootout in 5-8 seconds
+    if (shootoutDelay) {
+      delay (rand() % 3000 + 5000);            
+    }  
+    for (int i=0; i<=nrOfPixels; i++) {
+      if ((i % 2) == 0)
+      {
+       strip.setPixelColor(i, 0xFF, 0x00, 0xFF); 
+      } else {
+        strip.setPixelColor(i, 0x00, 0x00, 0xFF);
+      }            
+    }    
+    break;        
+  default:
+    for (int i=0; i<=nrOfPixels; i++) {
+      strip.setPixelColor(i, 0x00, 0x00, 0x00);      
+    }
+    break;
+  }
+  strip.show();
+  delay(HOLD_DELAY);
+  strip.clear();
 }
 
 void resetBase()
@@ -152,53 +249,8 @@ void baseDestroyed(Color setColor)
   resetBase();
 }
 
-void setPixels(Color setColor, int hitPoints)
-{  
-  int nrOfPixels;
-  strip.clear();
-  
-  //When -1 is given, all led are on
-  if (hitPoints == -1) {
-    nrOfPixels = strip.numPixels();    
-  } else {
-    nrOfPixels = hitPoints-1;    
-  }  
-
-  switch (setColor)
-  {
-  case purple:
-    for (int i=0; i<=nrOfPixels; i++) {
-      strip.setPixelColor(i, 0xFF, 0x00, 0xFF);
-      strip.show();      
-    }
-    break;
-  case blue:
-    for (int i=0; i<=nrOfPixels; i++) {
-      strip.setPixelColor(i, 0x00, 0x00, 0xFF);
-      strip.show();      
-    }
-    break;
-  case red:
-    for (int i=0; i<=nrOfPixels; i++) {
-      strip.setPixelColor(i, 0xFF, 0x00, 0x00);
-      strip.show();      
-    }
-    break;    
-  default:
-    for (int i=0; i<=nrOfPixels; i++) {
-      strip.setPixelColor(i, 0x00, 0x00, 0x00);
-      strip.show();
-    }
-    break;
-  }
-
-  delay(HOLD_DELAY);
-  strip.clear();
-}
-
-
 void baseHit(Color setColor)
-{
+{  
   if (_hitPoints > 1) {
     _hitPoints = _hitPoints - 1;    
 
@@ -215,11 +267,79 @@ void baseHit(Color setColor)
   }
 }
 
+//Show selectedTeam and how many time base is destroyed
+void indicateStatus(bool shootoutDelay = false)
+{
+  if (_timesDestroyed > 0)
+  {
+    setPixels(_selectedTeam, _timesDestroyed); 
+    delay(500);
+  } 
+
+  setPixels(_selectedTeam, -1, shootoutDelay);   
+}
+
+void shootOut(Color firstHitColor)
+{
+  if (_purplePoints == 5 ||  _bluePoints == 5)
+  {
+    _purplePoints = 0;
+    _bluePoints = 0;
+  }
+
+  if (firstHitColor == purple) _purplePoints = _purplePoints + 1;
+  if (firstHitColor == blue) _bluePoints = _bluePoints + 1;
+
+  for (int flash = 0; flash < 3; flash++)
+  {
+    strip.clear();
+    strip.show();
+    delay(HOLD_DELAY);
+
+    for (int i=0; i<=strip.numPixels(); i++) 
+    {
+      if(firstHitColor == purple) {
+        strip.setPixelColor(i, 0xFF, 0x00, 0xFF);
+        
+      } else if(firstHitColor == blue) {
+        strip.setPixelColor(i, 0x00, 0x00, 0xFF);          
+      }
+      
+      strip.show();
+    }
+    makeTone(CPLAY_BUZZER, 4000, SLOW_ANIMATION_DELAY);
+  }
+  
+  strip.clear();
+  strip.show();
+
+  for (int iblue=-1; iblue <_bluePoints; iblue++) 
+  {
+      strip.setPixelColor(iblue, 0x00, 0x00, 0xFF);      
+  }
+
+  for (int ipurple=-1; ipurple < _purplePoints; ipurple++) 
+  {
+      strip.setPixelColor(9-ipurple, 0xFF, 0x00, 0xFF);      
+  }
+
+  strip.show(); 
+  delay(INDICATION_ANIMATION_DELAY);
+  
+  indicateStatus(true);
+}
+
 //When the Base gets SHOT...
 void handleIR()
 {
-    if(myReceiver.getResults()) {
+    if(myReceiver.getResults()) {      
       myDecoder.decode();
+      
+      /*Show incoming buffer
+      for (int i = 0; i < recvGlobal.recvLength; i++)
+      {
+        Serial.println(recvGlobal.recvBuffer[i]);
+      }*/
       
     if(myDecoder.protocolNum==UNKNOWN) {     
 
@@ -230,29 +350,28 @@ void handleIR()
         baseHit(blue);
       } else if (myDecoder.value == BLUE && _selectedTeam == red) {
         baseHit(red);
+      } else if (myDecoder.value == BLUE && _selectedTeam == shootout) {
+        shootOut(blue);
+      } else if (myDecoder.value == PURPLE && _selectedTeam == shootout) {
+        shootOut(purple);
       }
+
     }
   }
   myReceiver.enableIRIn();  
 }
 
-//Show selectedTeam and how many time base is destroyed
-void indicateStatus()
-{
-  if (_timesDestroyed > 0)
-  {
-    setPixels(_selectedTeam, _timesDestroyed); 
-    delay(500);
-  } 
-
-  setPixels(_selectedTeam, -1);   
-}
-
 void handleButtons()
-{
+{    
     // If the left button is pressed....
   if (digitalRead(CPLAY_LEFTBUTTON) && !_leftbuttonPressed) {
     
+    /*mySender.send(&PURPLESend16[0],35,38);  
+    delay(500);
+    mySender.sendGeneric(*PURPLESend32, 16, 3, 6, 2, 1, 2, 2, 38, true);
+    delay(500);
+    myReceiver.enableIRIn();   */
+
     makeTone(CPLAY_BUZZER, 4000, 50);
     _leftbuttonPressed = true;    
 
@@ -273,20 +392,25 @@ void handleButtons()
     makeTone(CPLAY_BUZZER, 4000, 50); 
     _rightbuttonPressed = true;
     
-    if (_selectedTeam == red) {
+    /*if (_selectedTeam == red) {
       _selectedTeam = undefined;
     } else {
       _selectedTeam=(Color)(_selectedTeam-1);
     }
 
-    indicateStatus();   
+    indicateStatus();   */
+    if (_selectedTeam == shootout)
+    {
+      setPixels(undefined, -1);
+      setPixels(_selectedTeam, -1, true); 
+    }
 
   } else { 
     _rightbuttonPressed = false; 
   }
 }
 
-void loop() {  
+void loop() {      
   handleButtons();
   handleIR();
 }
